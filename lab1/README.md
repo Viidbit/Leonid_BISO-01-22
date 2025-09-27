@@ -27,7 +27,7 @@ leonid4216244@gmail.com
 
 ## Шаги:
 
-1.  Выполнили модуль Basic Building Blocks (вставить вывод консоли)
+1.  Выполнили модуль Basic Building Blocks
 
 |==== | 5% | In its simplest form, R can be used as an interactive
 calculator. Type 5 + 7 | and press Enter.

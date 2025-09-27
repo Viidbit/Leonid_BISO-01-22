@@ -43,7 +43,6 @@ Numbers)
 ## Шаги:   
 
 1. Выполнили модуль Basic Building Blocks
-(вставить вывод консоли)
 
   |====                                                                  |   5%
 | In its simplest form, R can be used as an interactive calculator. Type 5 + 7
