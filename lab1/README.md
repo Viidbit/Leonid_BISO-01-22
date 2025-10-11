@@ -34,9 +34,8 @@ calculator. Type 5 + 7 | and press Enter.
 
 ``` r
 5+7
+[1] 12
 ```
-
-\[1\] 12
 
 You are quite good my friend!
 
