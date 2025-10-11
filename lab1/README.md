@@ -31,8 +31,10 @@ leonid4216244@gmail.com
 
 |==== | 5% | In its simplest form, R can be used as an interactive
 calculator. Type 5 + 7 | and press Enter.
-'''{r}
-> 5 + 7''' \[1\] 12
+
+r 5+7
+
+\[1\] 12
 
 You are quite good my friend!
 
@@ -1335,6 +1337,8 @@ Great job!
 
 |======================================================================|
 100%
+
+\`\`\`
 
 ## Оценка результата
 
