@@ -1,7 +1,7 @@
 ---
 title: "Основы обработки данных с помощью R и Dplyr"
 subtitle: ""
-author: "leonid4216244@gmail.com"
+author: "Loona610@yandex.ru"
 format: 
   md:
     output-file: README.md
@@ -15,8 +15,8 @@ format:
 
 ## Исходные данные
 
-1.  Программное обеспечение Windows 10 Pro
-2.  Visual Studio Code с установленными плагинами для работы с языком R
+1.  Программное обеспечение Windows 11
+2.  Visual Studio Code 
 3.  Интерпретатор языка R 4.5.1
 
 ## План

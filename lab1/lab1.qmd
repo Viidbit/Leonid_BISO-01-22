@@ -1,7 +1,7 @@
 ---
 title: "Поиск IP-адреса злоумышленника"
 subtitle: "Отчёт по практике"
-author: "leonid4216244@gmail.com"
+author: "Loona610@yandex.ru"
 format: 
   md:
     output-file: README.md
