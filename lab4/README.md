@@ -209,7 +209,6 @@ head(dns_data, 10)
     #   rcode <dbl>, rcode_name <chr>, AA <lgl>, TC <lgl>, RD <lgl>, RA <lgl>,
     #   Z <dbl>, answers <chr>, TTLS <chr>, rejected <lgl>
 
-# Задание3: Просмотрите общую структуру данных с помощью функции glimpse()
 
 ``` r
 dns_data_clean <- dns_data %>%
