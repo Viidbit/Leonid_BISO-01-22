@@ -427,20 +427,20 @@ if(nrow(suspicious_activity) > 0) {
 } else {
   cat("Нет подозрительной активности\n")
 ```
-Подозрительные IP с повторяющимися запросами:
-# A tibble: 10 × 3
-   id_orig_h       query                           n
-   <chr>           <chr>                       <int>
- 1 10.10.117.210   teredo.ipv6.microsoft.com   27425
- 2 192.168.202.93  www.apple.com               10852
- 3 10.10.117.210   tools.google.com            10179
- 4 192.168.202.83  44.206.168.192.in-addr.arpa  7248
- 5 192.168.202.76  HPE8AA67                     6929
- 6 192.168.202.93  time.apple.com               6038
- 7 192.168.203.63  imap.gmail.com               5543
- 8 192.168.202.76  WPAD                         5175
- 9 192.168.202.103 api.twitter.com              4163
-10 192.168.202.103 api.facebook.com             4137                                    <NA>       Не опр… Не о… Не о…
+    Подозрительные IP с повторяющимися запросами:
+    # A tibble: 10 × 3
+       id_orig_h       query                           n
+       <chr>           <chr>                       <int>
+     1 10.10.117.210   teredo.ipv6.microsoft.com   27425
+     2 192.168.202.93  www.apple.com               10852
+     3 10.10.117.210   tools.google.com            10179
+     4 192.168.202.83  44.206.168.192.in-addr.arpa  7248
+     5 192.168.202.76  HPE8AA67                     6929
+     6 192.168.202.93  time.apple.com               6038
+     7 192.168.203.63  imap.gmail.com               5543
+     8 192.168.202.76  WPAD                         5175
+     9 192.168.202.103 api.twitter.com              4163
+    10 192.168.202.103 api.facebook.com             4137
 
 
 ## Оценка результата
