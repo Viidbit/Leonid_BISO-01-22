@@ -380,170 +380,69 @@ results
 # Задача 9: Поиск IP-адресов с периодическими запросами на один домен (из топ-10 доменов)
 
 ``` r
-top_domains <- top_10_domains$query
+top_domain_stats <- dns_data %>%
+  filter(query %in% top_domains$query) %>%
+  arrange(query, ts) %>%
+  group_by(query) %>%
+  mutate(time_diff = as.numeric(ts - lag(ts), units = "secs")) %>%
+  summarise(
+    min = min(time_diff, na.rm = TRUE),
+    q1 = quantile(time_diff, 0.25, na.rm = TRUE),
+    median = median(time_diff, na.rm = TRUE),
+    mean = mean(time_diff, na.rm = TRUE),
+    q3 = quantile(time_diff, 0.75, na.rm = TRUE),
+    max = max(time_diff, na.rm = TRUE),
+    .groups = 'drop'
+  )
 
-periodic_analysis <- data.frame(
-  source_ip = character(),
-  domain = character(),
-  request_count = integer(),
-  avg_interval = numeric(),
-  std_dev = numeric(),
-  is_periodic = logical()
-)
-
-for (domain in top_domains) {
-  domain_data <- dns_data_clean[dns_data_clean$query == domain, ]
-  domain_data <- domain_data[!is.na(domain_data$timestamp), ]
-  
-  unique_ips <- unique(domain_data$source_ip)
-  
-  for (ip in unique_ips) {
-    ip_data <- domain_data[domain_data$source_ip == ip, ]
-    
-    if (nrow(ip_data) >= 5) {
-      ip_data <- ip_data[order(ip_data$timestamp), ]
-      timestamps <- as.numeric(ip_data$timestamp)
-      intervals <- diff(timestamps)
-      
-      avg_interval <- mean(intervals)
-      std_dev <- sd(intervals)
-      
-      # Критерий периодичности: низкое стандартное отклонение относительно среднего
-      is_periodic <- std_dev < avg_interval * 0.5
-      
-      periodic_analysis <- rbind(periodic_analysis, data.frame(
-        source_ip = ip,
-        domain = domain,
-        request_count = nrow(ip_data),
-        avg_interval = avg_interval,
-        std_dev = std_dev,
-        is_periodic = is_periodic
-      ))
-    }
-  }
-}
-
-suspicious_ips <- periodic_analysis[periodic_analysis$is_periodic == TRUE, ] %>%
-  as_tibble()
-
-suspicious_ips
+print(top_domain_stats)
 ```
 
-    # A tibble: 9 × 6
-      source_ip       domain          request_count avg_interval std_dev is_periodic
-      <chr>           <chr>                   <int>        <dbl>   <dbl> <lgl>      
-    1 192.168.25.25   "safebrowsing.…             8       16.2   0.520   TRUE       
-    2 192.168.24.25   "safebrowsing.…             8       16.2   0.165   TRUE       
-    3 192.168.21.25   "safebrowsing.…             7       14.3   4.60    TRUE       
-    4 192.168.25.25   "*\\x00\\x00\\…             9        1.51  0.00641 TRUE       
-    5 192.168.202.120 "WPAD"                     14        0.656 0.296   TRUE       
-    6 192.168.202.49  "ISATAP"                   90        0.767 0.121   TRUE       
-    7 192.168.0.3     "ISATAP"                  108        0.874 0.313   TRUE       
-    8 192.168.202.146 "ISATAP"                    6        0.754 0.0270  TRUE       
-    9 192.168.202.147 "ISATAP"                   33        0.862 0.147   TRUE       
+# A tibble: 10 × 7
+   query                                    min    q1 median  mean     q3    max
+   <chr>                                  <dbl> <dbl>  <dbl> <dbl>  <dbl>  <dbl>
+ 1 "*\\x00\\x00\\x00\\x00\\x00\\x00\\x00…     0 0.150  0.5   11.2   1.5   52724.
+ 2 "44.206.168.192.in-addr.arpa"              0 2.09   4     16.0  20.1   49680.
+ 3 "HPE8AA67"                                 0 0.75   0.75  16.6  25.5   50044.
+ 4 "ISATAP"                                   0 0.75   0.760 17.5   1.05  51998.
+ 5 "WPAD"                                     0 0.75   0.75  12.6   1.11  50049.
+ 6 "safebrowsing.clients.google.com"          0 0      1     10.0   2.01  49952.
+ 7 "teredo.ipv6.microsoft.com"                0 0      0      2.94  0.510 50388.
+ 8 "time.apple.com"                           0 0.370  1.76   8.67  4.72  50924.
+ 9 "tools.google.com"                         0 0      0      8.19  1     50365.
+10 "www.apple.com"                            0 0      1      8.61  3.01  50964.     
 
 
 # Задача 10: Определение местоположения и провайдера для топ-10 доменов через их IP-адреса
 
 ``` r
-top_domains <- top_10_domains$query
+suspicious_activity <- dns_data %>%
+  count(id_orig_h, query, sort = TRUE) %>%
+  filter(n > 5) %>%
+  head(10)
 
-# Создаем mapping доменов и IP-адресов
-domain_ip_mapping <- data.frame(
-  domain = character(),
-  ip_address = character()
-)
-
-for (domain in top_domains) {
-  domain_data <- dns_data_clean[dns_data_clean$query == domain, ]
-  if (nrow(domain_data) > 0) {
-    ip <- domain_data$destination_ip[1]
-    domain_ip_mapping <- rbind(domain_ip_mapping, data.frame(
-      domain = domain,
-      ip_address = ip
-    ))
-  }
+if(nrow(suspicious_activity) > 0) {
+  cat("Подозрительные IP с повторяющимися запросами:\n")
+  print(suspicious_activity)
+} else {
+  cat("Нет подозрительной активности\n")
 }
-
-# Получаем геоинформацию для каждого IP
-domain_geo_info <- data.frame(
-  domain = character(),
-  ip_address = character(),
-  country = character(),
-  city = character(),
-  isp = character(),
-  stringsAsFactors = FALSE
-)
-
-for (i in 1:nrow(domain_ip_mapping)) {
-  domain <- domain_ip_mapping$domain[i]
-  ip <- domain_ip_mapping$ip_address[i]
-  
-  # Проверяем частные IP-адреса
-  if (grepl("^(10\\.|192\\.168\\.|172\\.(1[6-9]|2[0-9]|3[0-1])\\.)", ip)) {
-    domain_geo_info <- rbind(domain_geo_info, data.frame(
-      domain = domain,
-      ip_address = ip,
-      country = "Частный IP",
-      city = "Частный IP",
-      isp = "Частный IP"
-    ))
-    next
-  }
-  
-  # Запрос к API для публичных IP
-  url <- paste0("http://ip-api.com/json/", ip)
-  response <- GET(url)
-  
-  if (status_code(response) == 200) {
-    data <- fromJSON(content(response, "text"))
-    if (data$status == "success") {
-      domain_geo_info <- rbind(domain_geo_info, data.frame(
-        domain = domain,
-        ip_address = ip,
-        country = data$country,
-        city = data$city,
-        isp = data$isp
-      )) %>% as_tibble()
-    } else {
-      domain_geo_info <- rbind(domain_geo_info, data.frame(
-        domain = domain,
-        ip_address = ip,
-        country = "Не определено",
-        city = "Не определено",
-        isp = "Не определено"
-      )) %>% as_tibble()
-    }
-  } else {
-    domain_geo_info <- rbind(domain_geo_info, data.frame(
-      domain = domain,
-      ip_address = ip,
-      country = "Ошибка API",
-      city = "Ошибка API",
-      isp = "Ошибка API"
-    )) %>% as_tibble()
-  }
-  
-  # Пауза между запросами
-  Sys.sleep(1)
-}
-
-domain_geo_info
 ```
 
-    # A tibble: 10 × 5
-       domain                                         ip_address country city  isp  
-       <chr>                                          <chr>      <chr>   <chr> <chr>
-     1 "teredo.ipv6.microsoft.com"                    <NA>       Не опр… Не о… Не о…
-     2 "tools.google.com"                             <NA>       Не опр… Не о… Не о…
-     3 "www.apple.com"                                172.19.1.… Частны… Част… Част…
-     4 "time.apple.com"                               <NA>       Не опр… Не о… Не о…
-     5 "safebrowsing.clients.google.com"              <NA>       Не опр… Не о… Не о…
-     6 "*\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x… 192.168.2… Частны… Част… Част…
-     7 "WPAD"                                         192.168.2… Частны… Част… Част…
-     8 "44.206.168.192.in-addr.arpa"                  <NA>       Не опр… Не о… Не о…
-     9 "HPE8AA67"                                     192.168.2… Частны… Част… Част…
-    10 "ISATAP"                                       <NA>       Не опр… Не о… Не о…
+Подозрительные IP с повторяющимися запросами:
+# A tibble: 10 × 3
+   id_orig_h       query                           n
+   <chr>           <chr>                       <int>
+ 1 10.10.117.210   teredo.ipv6.microsoft.com   27425
+ 2 192.168.202.93  www.apple.com               10852
+ 3 10.10.117.210   tools.google.com            10179
+ 4 192.168.202.83  44.206.168.192.in-addr.arpa  7248
+ 5 192.168.202.76  HPE8AA67                     6929
+ 6 192.168.202.93  time.apple.com               6038
+ 7 192.168.203.63  imap.gmail.com               5543
+ 8 192.168.202.76  WPAD                         5175
+ 9 192.168.202.103 api.twitter.com              4163
+10 192.168.202.103 api.facebook.com             4137                                    <NA>       Не опр… Не о… Не о…
 
 ## Оценка результата
 
