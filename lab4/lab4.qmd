@@ -1,6 +1,6 @@
 ---
 title: "Исследование метаданных DNS трафика"
-subtitle: "Практика №3"
+subtitle: "Практика №4"
 author: "Lona610@yandex.ru"
 format: 
   md:
