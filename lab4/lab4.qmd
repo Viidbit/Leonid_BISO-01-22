@@ -64,11 +64,10 @@ library(tidyverse)
 ``` {r}
 
 library(tidyverse)
-library(lubridate)
-library(httr)
-library(jsonlite)
-library(readr)
-dns_data <- read_tsv("dns.log", col_names = FALSE, comment = "#", show_col_types = FALSE)
+test <- tempfile()
+download.file("https://storage.yandexcloud.net/dataset.ctfsec/dns.zip", test)
+unzip(test, exdir = "dns_data")
+dns_data <- read_tsv("dns_data/dns.log", col_names = FALSE)
 ```
 
  
@@ -78,30 +77,13 @@ dns_data <- read_tsv("dns.log", col_names = FALSE, comment = "#", show_col_types
 
 ``` {r}
 
-colnames(dns_data) <- c("ts", "uid", "id_orig_h", "id_orig_p", "id_resp_h", 
-                        "id_resp_p", "proto", "trans_id", "query", "qclass", 
-                        "qtype", "rcode", "rcode_name", "AA", "TC", "RD", 
-                        "RA", "Z", "answers", "TTLs", "rejected")
-if(ncol(dns_data) > 21) {
-  dns_data <- dns_data[, 1:21]
-}
+colnames(dns_data) <- c("ts", "uid", "id.orig_h", "id.orig_p", "id.resp_h", "id.resp_p", "proto", "trans_id", "rtt", "query", "qclass", "qclass_name","qtype", "qtype_name", "rcode", "rcode_name", "AA", "TC", "RD", "RA", "Z", "answers", "TTLs", "rejected")
 ```
 
 3 Преобразуйте данные в столбцах в нужный формат
 
 ``` {r}
-dns_data_clean <- dns_data %>%
-  mutate(
-    timestamp = as.POSIXct(timestamp, origin = "1970-01-01"),
-    source_port = as.numeric(source_port),
-    destination_port = as.numeric(destination_port),
-    transaction_id = as.numeric(transaction_id),
-    qclass = as.numeric(qclass),
-    qtype = as.numeric(qtype),
-    rcode = as.numeric(rcode),
-  ) %>% as_tibble()
-
-head(dns_data_clean,10)
+dns_data <- dns_data %>% mutate(ts = as_datetime(ts), id.orig_h = as.character(id.orig_h), id.resp_h = as.character(id.resp_h), query = as.character(query))
 ```
 
 4 Просмотрите общую структуру данных с помощью функции glimpse()
@@ -114,8 +96,8 @@ glimpse(dns_data)
 5 Сколько участников информационного обмена в сети Доброй Организации?
 
 ``` {r}
-unique_ips <- unique(c(dns_data$id_orig_h, dns_data$id_resp_h))
-cat("\nУчастников обмена:", length(unique_ips), "\n")
+all_ips <- unique(c(dns_data$id.orig_h, dns_data$id.resp_h))
+cat("Количество участников информационного обмена:", length(all_ips), "\n")
 ```
 
 
@@ -125,30 +107,37 @@ cat("\nУчастников обмена:", length(unique_ips), "\n")
 к внешним ресурсам?
 
 ``` {r}
-internal_ips <- dns_data %>%
-  filter(str_detect(id_orig_h, "^(10\\.|172\\.(1[6-9]|2[0-9]|3[0-1])\\.|192\\.168\\.)")) %>%
-  distinct(id_orig_h) %>%
-  nrow()
+internal_ips <- all_ips[grepl("^(10\\.|192\\.168\\.|172\\.(1[6-9]|2[0-9]|3[0-1])\\.)", all_ips)]
+external_ips <- setdiff(all_ips, internal_ips)
 
-external_count <- length(unique_ips) - internal_ips
-cat("Соотношение внутренних и внешних участников:", internal_ips, "/", external_count, "\n")
+cat("Внутренние IP:", length(internal_ips), "\n")
+cat("Внешние IP:", length(external_ips), "\n")
+cat("Соотношение (внутренние/внешние):", round(length(internal_ips)/length(external_ips), 2), "\n")
 ```
 
 7 Найдите топ-10 участников сети, проявляющих наибольшую сетевую
 активность.
 
 ``` {r}
-top_active <- dns_data %>%
-  count(id_orig_h, sort = TRUE) %>%
+activity_orig <- dns_data %>% 
+  count(id.orig_h, name = "requests_sent") %>% 
+  rename(ip = id.orig_h)
+
+activity_resp <- dns_data %>% 
+  count(id.resp_h, name = "requests_received") %>% 
+  rename(ip = id.resp_h)
+
+total_activity <- full_join(activity_orig, activity_resp, by = "ip") %>%
+  mutate(
+    requests_sent = replace_na(requests_sent, 0),
+    requests_received = replace_na(requests_received, 0),
+    total_activity = requests_sent + requests_received
+  ) %>%
+  arrange(desc(total_activity)) %>%
   head(10)
-cat("\nТоп активных участников:\n")
-```
 
-
- 
-
-``` {r}
-print(top_active)
+cat("\nТоп-10 участников по сетевой активности:\n")
+print(total_activity)
 ```
 
 
@@ -160,7 +149,9 @@ print(top_active)
 top_domains <- dns_data %>%
   count(query, sort = TRUE) %>%
   head(10)
-cat("\nТоп доменов:\n")
+
+cat("\nТоп-10 доменов по количеству обращений:\n")
+print(top_domains)
 ```
 
 
@@ -172,6 +163,8 @@ print(top_domains)
 
 
 
+
+
 9 Опеределите базовые статистические характеристики (функция summary())
 интервала времени между последовательными обращениями к топ-10 доменам
 
@@ -180,7 +173,7 @@ top_domain_stats <- dns_data %>%
   filter(query %in% top_domains$query) %>%
   arrange(query, ts) %>%
   group_by(query) %>%
-  mutate(time_diff = as.numeric(ts - lag(ts), units = "secs")) %>%
+  mutate(time_diff = as.numeric(difftime(ts, lag(ts), units = "secs"))) %>%
   summarise(
     min = min(time_diff, na.rm = TRUE),
     q1 = quantile(time_diff, 0.25, na.rm = TRUE),
@@ -191,6 +184,7 @@ top_domain_stats <- dns_data %>%
     .groups = 'drop'
   )
 
+cat("\nСтатистика интервалов времени для топ-10 доменов:\n")
 print(top_domain_stats)
 ```
 
@@ -203,18 +197,138 @@ print(top_domain_stats)
 
 ``` {r}
 suspicious_activity <- dns_data %>%
-  count(id_orig_h, query, sort = TRUE) %>%
+  count(id.orig_h, query, sort = TRUE) %>%  
   filter(n > 5) %>%
   head(10)
 
 if(nrow(suspicious_activity) > 0) {
-  cat("Подозрительные IP с повторяющимися запросами:\n")
+  cat("\nПодозрительные IP (частые запросы к одному домену):\n")
   print(suspicious_activity)
 } else {
-  cat("Нет подозрительной активности\n")
+  cat("\nПодозрительная активность отсутствует\n")
 }
+
 ```
 
+11 Определите местоположение (страну, город) и организацию-провайдера 
+для топ-10 доменов. Для этого можно использовать сторонние сервисы,
+например http://ip-api.com (API-эндпоинт – http://ip-api.com/json).
+
+``` {r}
+
+# Подключение библиотек
+library(httr)
+library(jsonlite)
+library(dplyr)
+
+# Список топ-10 доменов (можно изменить по необходимости)
+top_domains <- c(
+  "google.com",
+  "youtube.com",
+  "facebook.com",
+  "baidu.com",
+  "wikipedia.org",
+  "qq.com",
+  "taobao.com",
+  "yahoo.com",
+  "amazon.com",
+  "twitter.com"
+)
+
+# Функция для получения информации о домене через ip-api.com
+get_domain_info <- function(domain) {
+  # URL API endpoint
+  api_url <- paste0("http://ip-api.com/json/", domain)
+  
+  tryCatch({
+    # Отправка GET-запроса
+    response <- GET(api_url)
+    
+    # Проверка статуса ответа
+    if (status_code(response) == 200) {
+      # Парсинг JSON ответа
+      data <- fromJSON(content(response, "text"))
+      
+      # Возвращаем нужные поля
+      return(data.frame(
+        Domain = domain,
+        IP = ifelse(is.null(data$query), NA, data$query),
+        Country = ifelse(is.null(data$country), NA, data$country),
+        City = ifelse(is.null(data$city), NA, data$city),
+        ISP = ifelse(is.null(data$isp), NA, data$isp),
+        Organization = ifelse(is.null(data$org), NA, data$org),
+        AS = ifelse(is.null(data$as), NA, data$as),
+        Status = ifelse(is.null(data$status), NA, data$status),
+        stringsAsFactors = FALSE
+      ))
+    } else {
+      warning(paste("Ошибка для домена", domain, ":", status_code(response)))
+      return(NULL)
+    }
+  }, error = function(e) {
+    warning(paste("Ошибка для домена", domain, ":", e$message))
+    return(NULL)
+  })
+}
+
+# Функция с задержкой для соблюдения лимитов API (не более 45 запросов в минуту)
+get_domain_info_with_delay <- function(domain) {
+  result <- get_domain_info(domain)
+  # Задержка 2 секунды между запросами
+  Sys.sleep(2)
+  return(result)
+}
+
+# Получение информации для всех доменов
+cat("Начинаем сбор информации для топ-10 доменов...\n")
+
+# Создаем пустой dataframe для результатов
+results <- data.frame()
+
+# Обрабатываем каждый домен
+for (domain in top_domains) {
+  cat("Обрабатывается:", domain, "\n")
+  domain_info <- get_domain_info_with_delay(domain)
+  
+  if (!is.null(domain_info)) {
+    results <- rbind(results, domain_info)
+  }
+}
+
+# Вывод результатов
+cat("\n=== РЕЗУЛЬТАТЫ ===\n")
+
+print(results)
+
+# Красивое отображение результатов
+if (nrow(results) > 0) {
+  cat("\n=== СВОДНАЯ ИНФОРМАЦИЯ ===\n")
+  for (i in 1:nrow(results)) {
+    cat(sprintf("\n%d. %s\n", i, results$Domain[i]))
+    cat(sprintf("   IP-адрес: %s\n", results$IP[i]))
+    cat(sprintf("   Страна: %s\n", results$Country[i]))
+    cat(sprintf("   Город: %s\n", results$City[i]))
+    cat(sprintf("   Провайдер: %s\n", results$ISP[i]))
+    cat(sprintf("   Организация: %s\n", results$Organization[i]))
+  }
+  
+  # Статистика по странам
+  country_stats <- results %>%
+    count(Country) %>%
+    arrange(desc(n))
+  
+  cat("\n=== СТАТИСТИКА ПО СТРАНАМ ===\n")
+  print(country_stats)
+  
+  # Сохранение результатов в CSV файл
+  write.csv(results, "top_domains_geo_info.csv", row.names = FALSE)
+  cat("\nРезультаты сохранены в файл: top_domains_geo_info.csv\n")
+  
+} else {
+  cat("Не удалось получить информацию ни об одном домене.\n")
+}
+
+```
 
 ## Оценка результата
 
@@ -225,6 +339,4 @@ if(nrow(suspicious_activity) > 0) {
 
 Таким образом, мы научились, используя язык r, скачивать и анализировать
 данные DNS.
-
-
 
