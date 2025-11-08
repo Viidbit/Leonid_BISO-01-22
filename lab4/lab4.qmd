@@ -1,5 +1,13 @@
-# Исследование метаданных DNS трафика
-Loona610@yandex.ru
+---
+title: "Исследование метаданных DNS трафика"
+subtitle: "Практика №3"
+author: "Lona610@yandex.ru"
+format: 
+  md:
+    output-file: README.md
+---
+
+
 
 ## Цель работы
 
