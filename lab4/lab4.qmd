@@ -55,27 +55,29 @@ format:
 
 1 Импортируйте данные DNS
 
-``` r
+``` {r}
 library(tidyverse)
 ```
-K
+
+
 
 ``` {r}
+
+library(tidyverse)
 library(lubridate)
 library(httr)
 library(jsonlite)
-```
-
-
-
-``` {r}
-dns_data <- read_tsv("dns.log", col_names = FALSE, comment = "#")
+library(readr)
+dns_data <- read_tsv("dns.log", col_names = FALSE, comment = "#", show_col_types = FALSE)
 ```
 
  
-2 Добавьте пропущенные данные о структуре данных (назначении столбцов)
+2 Добавьте пропущенные данные о структуре данных (назначении столбцов) 
+
+
 
 ``` {r}
+
 colnames(dns_data) <- c("ts", "uid", "id_orig_h", "id_orig_p", "id_resp_h", 
                         "id_resp_p", "proto", "trans_id", "query", "qclass", 
                         "qtype", "rcode", "rcode_name", "AA", "TC", "RD", 
@@ -88,12 +90,18 @@ if(ncol(dns_data) > 21) {
 3 Преобразуйте данные в столбцах в нужный формат
 
 ``` {r}
-dns_data <- dns_data %>%
+dns_data_clean <- dns_data %>%
   mutate(
-    ts = as_datetime(ts),
-    id_orig_p = as.integer(id_orig_p),
-    id_resp_p = as.integer(id_resp_p)
-  )
+    timestamp = as.POSIXct(timestamp, origin = "1970-01-01"),
+    source_port = as.numeric(source_port),
+    destination_port = as.numeric(destination_port),
+    transaction_id = as.numeric(transaction_id),
+    qclass = as.numeric(qclass),
+    qtype = as.numeric(qtype),
+    rcode = as.numeric(rcode),
+  ) %>% as_tibble()
+
+head(dns_data_clean,10)
 ```
 
 4 Просмотрите общую структуру данных с помощью функции glimpse()
@@ -217,3 +225,6 @@ if(nrow(suspicious_activity) > 0) {
 
 Таким образом, мы научились, используя язык r, скачивать и анализировать
 данные DNS.
+
+
+

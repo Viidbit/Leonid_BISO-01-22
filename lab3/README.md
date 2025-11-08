@@ -1,5 +1,5 @@
 # Основы обработки данных с помощью R и Dplyr
-Loona610@yandex.ru
+Lona610@yandex.ru
 
 ## Цель работы
 
@@ -27,24 +27,29 @@ Loona610@yandex.ru
 
     ``` r
     library(nycflights13)
+    ```
+
+        Warning: пакет 'nycflights13' был собран под R версии 4.5.2
+
+    ``` r
     library(dplyr)
     ```
 
 
-        Attaching package: 'dplyr'
+        Присоединяю пакет: 'dplyr'
 
-        The following objects are masked from 'package:stats':
+        Следующие объекты скрыты от 'package:stats':
 
             filter, lag
 
-        The following objects are masked from 'package:base':
+        Следующие объекты скрыты от 'package:base':
 
             intersect, setdiff, setequal, union
 
 2.  Сколько встроенных в пакет nycflights13 датафреймов? (Ответ - 5)
 
     ``` r
-    ata(package = "nycflights13")
+    data(package = "nycflights13")
     ```
 
 3.  Сколько строк в каждом датафрейме?
@@ -69,41 +74,45 @@ Loona610@yandex.ru
     summary(flights)
     ```
 
-        Rows: 336,776
-        Columns: 19
-        $ year           <int> 2013, 2013, 2013, 2013, 2013, 2013, 2013, 2013, 2013, 2…
-        $ month          <int> 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1…
-        $ day            <int> 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1…
-        $ dep_time       <int> 517, 533, 542, 544, 554, 554, 555, 557, 557, 558, 558, …
-        $ sched_dep_time <int> 515, 529, 540, 545, 600, 558, 600, 600, 600, 600, 600, …
-        $ dep_delay      <dbl> 2, 4, 2, -1, -6, -4, -5, -3, -3, -2, -2, -2, -2, -2, -1…
-        $ arr_time       <int> 830, 850, 923, 1004, 812, 740, 913, 709, 838, 753, 849,…
-        $ sched_arr_time <int> 819, 830, 850, 1022, 837, 728, 854, 723, 846, 745, 851,…
-        $ arr_delay      <dbl> 11, 20, 33, -18, -25, 12, 19, -14, -8, 8, -2, -3, 7, -1…
-        $ carrier        <chr> "UA", "UA", "AA", "B6", "DL", "UA", "B6", "EV", "B6", "…
-        $ flight         <int> 1545, 1714, 1141, 725, 461, 1696, 507, 5708, 79, 301, 4…
-        $ tailnum        <chr> "N14228", "N24211", "N619AA", "N804JB", "N668DN", "N394…
-        $ origin         <chr> "EWR", "LGA", "JFK", "JFK", "LGA", "EWR", "EWR", "LGA",…
-        $ dest           <chr> "IAH", "IAH", "MIA", "BQN", "ATL", "ORD", "FLL", "IAD",…
-        $ air_time       <dbl> 227, 227, 160, 183, 116, 150, 158, 53, 140, 138, 149, 1…
-        $ distance       <dbl> 1400, 1416, 1089, 1576, 762, 719, 1065, 229, 944, 733, …
-        $ hour           <dbl> 5, 5, 5, 5, 6, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 5, 6, 6, 6…
-        $ minute         <dbl> 15, 29, 40, 45, 0, 58, 0, 0, 0, 0, 0, 0, 0, 0, 0, 59, 0…
-        $ time_hour      <dttm> 2013-01-01 05:00:00, 2013-01-01 05:00:00, 2013-01-01 0…
+              year          month             day           dep_time    sched_dep_time
+         Min.   :2013   Min.   : 1.000   Min.   : 1.00   Min.   :   1   Min.   : 106  
+         1st Qu.:2013   1st Qu.: 4.000   1st Qu.: 8.00   1st Qu.: 907   1st Qu.: 906  
+         Median :2013   Median : 7.000   Median :16.00   Median :1401   Median :1359  
+         Mean   :2013   Mean   : 6.549   Mean   :15.71   Mean   :1349   Mean   :1344  
+         3rd Qu.:2013   3rd Qu.:10.000   3rd Qu.:23.00   3rd Qu.:1744   3rd Qu.:1729  
+         Max.   :2013   Max.   :12.000   Max.   :31.00   Max.   :2400   Max.   :2359  
+                                                         NA's   :8255                 
+           dep_delay          arr_time    sched_arr_time   arr_delay       
+         Min.   : -43.00   Min.   :   1   Min.   :   1   Min.   : -86.000  
+         1st Qu.:  -5.00   1st Qu.:1104   1st Qu.:1124   1st Qu.: -17.000  
+         Median :  -2.00   Median :1535   Median :1556   Median :  -5.000  
+         Mean   :  12.64   Mean   :1502   Mean   :1536   Mean   :   6.895  
+         3rd Qu.:  11.00   3rd Qu.:1940   3rd Qu.:1945   3rd Qu.:  14.000  
+         Max.   :1301.00   Max.   :2400   Max.   :2359   Max.   :1272.000  
+         NA's   :8255      NA's   :8713                  NA's   :9430      
+           carrier              flight       tailnum             origin         
+         Length:336776      Min.   :   1   Length:336776      Length:336776     
+         Class :character   1st Qu.: 553   Class :character   Class :character  
+         Mode  :character   Median :1496   Mode  :character   Mode  :character  
+                            Mean   :1972                                        
+                            3rd Qu.:3465                                        
+                            Max.   :8500                                        
 
-    ``` r
-    head(airports)
-    ```
-
-        # A tibble: 6 × 8
-          faa   name                             lat   lon   alt    tz dst   tzone      
-          <chr> <chr>                          <dbl> <dbl> <dbl> <dbl> <chr> <chr>      
-        1 04G   Lansdowne Airport               41.1 -80.6  1044    -5 A     America/Ne…
-        2 06A   Moton Field Municipal Airport   32.5 -85.7   264    -6 A     America/Ch…
-        3 06C   Schaumburg Regional             42.0 -88.1   801    -6 A     America/Ch…
-        4 06N   Randall Airport                 41.4 -74.4   523    -5 A     America/Ne…
-        5 09J   Jekyll Island Airport           31.1 -81.4    11    -5 A     America/Ne…
-        6 0A9   Elizabethton Municipal Airport  36.4 -82.2  1593    -5 A     America/Ne…
+             dest              air_time        distance         hour      
+         Length:336776      Min.   : 20.0   Min.   :  17   Min.   : 1.00  
+         Class :character   1st Qu.: 82.0   1st Qu.: 502   1st Qu.: 9.00  
+         Mode  :character   Median :129.0   Median : 872   Median :13.00  
+                            Mean   :150.7   Mean   :1040   Mean   :13.18  
+                            3rd Qu.:192.0   3rd Qu.:1389   3rd Qu.:17.00  
+                            Max.   :695.0   Max.   :4983   Max.   :23.00  
+                            NA's   :9430                                  
+             minute        time_hour                  
+         Min.   : 0.00   Min.   :2013-01-01 05:00:00  
+         1st Qu.: 8.00   1st Qu.:2013-04-04 13:00:00  
+         Median :29.00   Median :2013-07-03 10:00:00  
+         Mean   :26.23   Mean   :2013-07-03 05:22:54  
+         3rd Qu.:44.00   3rd Qu.:2013-10-01 07:00:00  
+         Max.   :59.00   Max.   :2013-12-31 23:00:00  
 
 6.  Сколько компаний-перевозчиков (carrier) учитывают эти наборы данных
     (представлено в наборах данных)?
@@ -124,7 +133,10 @@ Loona610@yandex.ru
         tally()
     ```
 
-        [1] 0
+        # A tibble: 1 × 1
+              n
+          <int>
+        1     0
 
 8.  Какой самый северный аэропорт?
 
@@ -133,7 +145,6 @@ Loona610@yandex.ru
         arrange(desc(lat)) %>%
         head(1) %>%
         pull(name)
-    ```
     ```
 
         [1] "Dillant Hopkins Airport"

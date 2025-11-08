@@ -13,7 +13,7 @@ Loona610@yandex.ru
 ## Исходные данные
 
 1.  Программное обеспечение Windows 11
-2.  Visual Studio Code 
+2.  Visual Studio Code
 3.  Интерпретатор языка R 4.5.1
 
 ## План
@@ -30,13 +30,13 @@ Loona610@yandex.ru
     ```
 
 
-        Attaching package: 'dplyr'
+        Присоединяю пакет: 'dplyr'
 
-        The following objects are masked from 'package:stats':
+        Следующие объекты скрыты от 'package:stats':
 
             filter, lag
 
-        The following objects are masked from 'package:base':
+        Следующие объекты скрыты от 'package:base':
 
             intersect, setdiff, setequal, union
 
@@ -104,7 +104,7 @@ Loona610@yandex.ru
     starwars[starwars$height < 170, ]
     ```
 
-        # A tibble: 22 × 14
+        # A tibble: 28 × 14
            name     height  mass hair_color skin_color eye_color birth_year sex   gender
            <chr>     <int> <dbl> <chr>      <chr>      <chr>          <dbl> <chr> <chr> 
          1 C-3PO       167    75 <NA>       gold       yellow           112 none  mascu…
@@ -114,10 +114,10 @@ Loona610@yandex.ru
          5 R5-D4        97    32 <NA>       white, red red               NA none  mascu…
          6 Yoda         66    17 white      green      brown            896 male  mascu…
          7 Mon Mot…    150    NA auburn     fair       blue              48 fema… femin…
-         8 Wicket …     88    20 brown      brown      brown              8 male  mascu…
-         9 Nien Nu…    160    68 none       grey       black             NA male  mascu…
-        10 Watto       137    NA black      blue, grey yellow            NA male  mascu…
-        # ℹ 12 more rows
+         8 <NA>         NA    NA <NA>       <NA>       <NA>              NA <NA>  <NA>  
+         9 Wicket …     88    20 brown      brown      brown              8 male  mascu…
+        10 Nien Nu…    160    68 none       grey       black             NA male  mascu…
+        # ℹ 18 more rows
         # ℹ 5 more variables: homeworld <chr>, species <chr>, films <list>,
         #   vehicles <list>, starships <list>
 
@@ -149,11 +149,10 @@ Loona610@yandex.ru
     отношению массы (mass) к росту (height) персонажей
 
     ``` r
-    starwars %>%
+       starwars %>%
         filter(!is.na(mass), !is.na(height), height > 0) %>%
         mutate(stretchiness = mass / height) %>%
         slice_max(stretchiness, n = 10)
-    ```
     ```
 
         # A tibble: 10 × 15
@@ -175,7 +174,7 @@ Loona610@yandex.ru
 9.  Найти средний возраст персонажей каждой раcы вселенной Звездных войн
 
     ``` r
-    tarwars %>%
+    starwars %>%
         mutate(age = 100 + birth_year) %>%
         group_by(species) %>%
         summarise(Avg_age = median(age, na.rm = TRUE))
@@ -239,9 +238,9 @@ Loona610@yandex.ru
 
 ## Оценка результата
 
-В результате лабораторной работы мы развили практические навыки
-использования языка программирования R для обработки данных и закрепили
-знания базовых типов данных языка R
+В результате лабораторной работы мы преобрели необходимые навыки работы
+с языком R для обработки данных и закрепили знания базовых типов данных
+языка R
 
 ## Вывод
 
