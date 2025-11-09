@@ -332,7 +332,7 @@ if(nrow(suspicious_activity) > 0) {
 например http://ip-api.com (API-эндпоинт – http://ip-api.com/json).
 
 ``` r
-# Подключение библиотек
+# Импорт необходимых пакетов
 library(httr)
 library(jsonlite)
 ```
@@ -347,266 +347,238 @@ library(jsonlite)
 ``` r
 library(dplyr)
 
-# Список топ-10 доменов (можно изменить по необходимости)
-top_domains <- c(
-  "google.com",
-  "youtube.com",
-  "facebook.com",
-  "baidu.com",
-  "wikipedia.org",
-  "qq.com",
-  "taobao.com",
-  "yahoo.com",
-  "amazon.com",
+# Определение исследуемых доменных имен
+selected_domains <- c(
+  "google.com", "youtube.com", "facebook.com", 
+  "baidu.com", "wikipedia.org", "qq.com", 
+  "taobao.com", "yahoo.com", "amazon.com", 
   "twitter.com"
 )
 
-# Функция для получения информации о домене через ip-api.com
-get_domain_info <- function(domain) {
-  # URL API endpoint
-  api_url <- paste0("http://ip-api.com/json/", domain)
+# Функция получения географических данных домена
+fetch_geo_data <- function(domain_name) {
+  api_endpoint <- sprintf("http://ip-api.com/json/%s", domain_name)
   
-  tryCatch({
-    # Отправка GET-запроса
-    response <- GET(api_url)
+  attempt <- tryCatch({
+    api_response <- GET(api_endpoint)
     
-    # Проверка статуса ответа
-    if (status_code(response) == 200) {
-      # Парсинг JSON ответа
-      data <- fromJSON(content(response, "text"))
+    if (http_status(api_response)$category == "Success") {
+      response_data <- content(api_response, "parsed")
       
-      # Возвращаем нужные поля
-      return(data.frame(
-        Domain = domain,
-        IP = ifelse(is.null(data$query), NA, data$query),
-        Country = ifelse(is.null(data$country), NA, data$country),
-        City = ifelse(is.null(data$city), NA, data$city),
-        ISP = ifelse(is.null(data$isp), NA, data$isp),
-        Organization = ifelse(is.null(data$org), NA, data$org),
-        AS = ifelse(is.null(data$as), NA, data$as),
-        Status = ifelse(is.null(data$status), NA, data$status),
-        stringsAsFactors = FALSE
-      ))
+      tibble(
+        Domain = domain_name,
+        IP_address = response_data$query %||% NA,
+        Country = response_data$country %||% NA,
+        City = response_data$city %||% NA,
+        ISP = response_data$isp %||% NA,
+        Organization = response_data$org %||% NA,
+        AS_number = response_data$as %||% NA,
+        Request_status = response_data$status %||% NA
+      )
     } else {
-      warning(paste("Ошибка для домена", domain, ":", status_code(response)))
-      return(NULL)
+      message("Сбой запроса для ", domain_name, " - код: ", status_code(api_response))
+      NULL
     }
-  }, error = function(e) {
-    warning(paste("Ошибка для домена", domain, ":", e$message))
-    return(NULL)
+  }, error = function(err) {
+    message("Ошибка при обработке ", domain_name, ": ", err$message)
+    NULL
   })
+  
+  return(attempt)
 }
 
-# Функция с задержкой для соблюдения лимитов API (не более 45 запросов в минуту)
-get_domain_info_with_delay <- function(domain) {
-  result <- get_domain_info(domain)
-  # Задержка 2 секунды между запросами
-  Sys.sleep(2)
-  return(result)
+# Модифицированная функция с задержкой выполнения
+fetch_with_delay <- function(domain) {
+  result_data <- fetch_geo_data(domain)
+  Sys.sleep(2.0)
+  return(result_data)
 }
 
-# Получение информации для всех доменов
-cat("Начинаем сбор информации для топ-10 доменов...\n")
+# Основной процесс сбора данных
+cat("Запуск процесса сбора географических данных...\n\n")
 ```
 
-    Начинаем сбор информации для топ-10 доменов...
+    Запуск процесса сбора географических данных...
 
 ``` r
-# Создаем пустой dataframe для результатов
-results <- data.frame()
+collected_results <- list()
 
-# Обрабатываем каждый домен
-for (domain in top_domains) {
-  cat("Обрабатывается:", domain, "\n")
-  domain_info <- get_domain_info_with_delay(domain)
+for (current_domain in selected_domains) {
+  cat("Анализируется: ", current_domain, "\n")
+  domain_data <- fetch_with_delay(current_domain)
   
-  if (!is.null(domain_info)) {
-    results <- rbind(results, domain_info)
+  if (!is.null(domain_data)) {
+    collected_results[[length(collected_results) + 1]] <- domain_data
   }
 }
 ```
 
-    Обрабатывается: google.com 
-    Обрабатывается: youtube.com 
-    Обрабатывается: facebook.com 
-    Обрабатывается: baidu.com 
-    Обрабатывается: wikipedia.org 
-    Обрабатывается: qq.com 
-    Обрабатывается: taobao.com 
-    Обрабатывается: yahoo.com 
-    Обрабатывается: amazon.com 
-    Обрабатывается: twitter.com 
+    Анализируется:  google.com 
+    Анализируется:  youtube.com 
+    Анализируется:  facebook.com 
+    Анализируется:  baidu.com 
+    Анализируется:  wikipedia.org 
+    Анализируется:  qq.com 
+    Анализируется:  taobao.com 
+    Анализируется:  yahoo.com 
+    Анализируется:  amazon.com 
+    Анализируется:  twitter.com 
 
 ``` r
-# Вывод результатов
-cat("\n=== РЕЗУЛЬТАТЫ ===\n")
+# Объединение результатов
+final_results <- bind_rows(collected_results)
+
+# Вывод итоговой информации
+cat("\n", strrep("=", 50), "\n")
 ```
 
 
-    === РЕЗУЛЬТАТЫ ===
+     ================================================== 
 
 ``` r
-print(results)
+cat("ОБРАБОТАННЫЕ ДОМЕНЫ\n")
 ```
 
-              Domain                     IP         Country          City
-    1     google.com         142.251.30.100   United States Mountain View
-    2    youtube.com 2a00:1450:4009:c13::be  United Kingdom        London
-    3   facebook.com         157.240.214.35  United Kingdom        London
-    4      baidu.com          220.181.7.203           China       Beijing
-    5  wikipedia.org          185.15.59.224 The Netherlands     Amsterdam
-    6         qq.com        203.205.254.157       Hong Kong     Hong Kong
-    7     taobao.com           59.82.44.240           China      Hangzhou
-    8      yahoo.com            74.6.231.20   United States         Omaha
-    9     amazon.com           98.87.170.74   United States       Ashburn
-    10   twitter.com           172.66.0.227          Canada       Toronto
-                                                     ISP
-    1                                         Google LLC
-    2                                         Google LLC
-    3                                     Facebook, Inc.
-    4          IDC, China Telecommunications Corporation
-    5                              Wikimedia esams infra
-    6  Shenzhen Tencent Computer Systems Company Limited
-    7                    Hangzhou Alibaba Advertising Co
-    8                                 Oath Holdings Inc.
-    9                                         AT&T Corp.
-    10                                  Cloudflare, Inc.
-                                 Organization
-    1                              Google LLC
-    2                 Google Public DNS (lhr)
-    3                          Facebook, Inc.
-    4                                        
-    5                                        
-    6                                 Tencent
-    7  Hangzhou Alibaba Advertising Co., Ltd.
-    8                       Oath Holdings Inc
-    9    Amazon Technologies Inc. (us-east-1)
-    10                       Cloudflare, Inc.
-                                                      AS  Status
-    1                                 AS15169 Google LLC success
-    2                                 AS15169 Google LLC success
-    3                             AS32934 Facebook, Inc. success
-    4  AS23724 IDC, China Telecommunications Corporation success
-    5                  AS14907 Wikimedia Foundation Inc. success
-    6      AS132203 Tencent Building, Kejizhongyi Avenue success
-    7      AS37963 Hangzhou Alibaba Advertising Co.,Ltd. success
-    8                        AS36646 Yahoo Holdings Inc. success
-    9                           AS14618 Amazon.com, Inc. success
-    10                          AS13335 Cloudflare, Inc. success
+    ОБРАБОТАННЫЕ ДОМЕНЫ
 
 ``` r
-# Красивое отображение результатов
-if (nrow(results) > 0) {
-  cat("\n=== СВОДНАЯ ИНФОРМАЦИЯ ===\n")
-  for (i in 1:nrow(results)) {
-    cat(sprintf("\n%d. %s\n", i, results$Domain[i]))
-    cat(sprintf("   IP-адрес: %s\n", results$IP[i]))
-    cat(sprintf("   Страна: %s\n", results$Country[i]))
-    cat(sprintf("   Город: %s\n", results$City[i]))
-    cat(sprintf("   Провайдер: %s\n", results$ISP[i]))
-    cat(sprintf("   Организация: %s\n", results$Organization[i]))
+cat(strrep("=", 50), "\n")
+```
+
+    ================================================== 
+
+``` r
+if (nrow(final_results) > 0) {
+  # Детальный вывод по каждому домену
+  cat("\nДЕТАЛЬНАЯ ИНФОРМАЦИЯ:\n")
+  cat(strrep("-", 50), "\n")
+  
+  for (row_index in seq_len(nrow(final_results))) {
+    current_row <- final_results[row_index, ]
+    
+    cat(sprintf("\n%2d. %s\n", row_index, current_row$Domain))
+    cat("    ├─ IP-адрес: ", current_row$IP_address, "\n")
+    cat("    ├─ Страна: ", current_row$Country, "\n")
+    cat("    ├─ Город: ", current_row$City, "\n")
+    cat("    ├─ Провайдер: ", current_row$ISP, "\n")
+    cat("    └─ Организация: ", current_row$Organization, "\n")
   }
   
-  # Статистика по странам
-  country_stats <- results %>%
-    count(Country) %>%
-    arrange(desc(n))
+  # Анализ распределения по странам
+  country_distribution <- final_results %>%
+    group_by(Country) %>%
+    summarise(Количество = n(), .groups = 'drop') %>%
+    arrange(desc(Количество))
   
-  cat("\n=== СТАТИСТИКА ПО СТРАНАМ ===\n")
-  print(country_stats)
+  cat("\n", strrep("=", 50), "\n")
+  cat("ГЕОГРАФИЧЕСКОЕ РАСПРЕДЕЛЕНИЕ\n")
+  cat(strrep("=", 50), "\n")
+  print(country_distribution)
   
-  # Сохранение результатов в CSV файл
-  write.csv(results, "top_domains_geo_info.csv", row.names = FALSE)
-  cat("\nРезультаты сохранены в файл: top_domains_geo_info.csv\n")
+  # Сохранение результатов
+  output_filename <- "geo_analysis_results.csv"
+  write.csv(final_results, output_filename, row.names = FALSE)
+  cat(sprintf("\nДанные сохранены в файл: %s\n", output_filename))
   
 } else {
-  cat("Не удалось получить информацию ни об одном домене.\n")
+  cat("Не удалось получить данные для указанных доменов.\n")
 }
 ```
 
 
-    === СВОДНАЯ ИНФОРМАЦИЯ ===
+    ДЕТАЛЬНАЯ ИНФОРМАЦИЯ:
+    -------------------------------------------------- 
 
-    1. google.com
-       IP-адрес: 142.251.30.100
-       Страна: United States
-       Город: Mountain View
-       Провайдер: Google LLC
-       Организация: Google LLC
+     1. google.com
+        ├─ IP-адрес:  142.250.151.101 
+        ├─ Страна:  United States 
+        ├─ Город:  Mountain View 
+        ├─ Провайдер:  Google LLC 
+        └─ Организация:  Google LLC 
 
-    2. youtube.com
-       IP-адрес: 2a00:1450:4009:c13::be
-       Страна: United Kingdom
-       Город: London
-       Провайдер: Google LLC
-       Организация: Google Public DNS (lhr)
+     2. youtube.com
+        ├─ IP-адрес:  142.250.129.93 
+        ├─ Страна:  United States 
+        ├─ Город:  Mountain View 
+        ├─ Провайдер:  Google LLC 
+        └─ Организация:  Google LLC 
 
-    3. facebook.com
-       IP-адрес: 157.240.214.35
-       Страна: United Kingdom
-       Город: London
-       Провайдер: Facebook, Inc.
-       Организация: Facebook, Inc.
+     3. facebook.com
+        ├─ IP-адрес:  157.240.214.35 
+        ├─ Страна:  United Kingdom 
+        ├─ Город:  London 
+        ├─ Провайдер:  Facebook, Inc. 
+        └─ Организация:  Facebook, Inc. 
 
-    4. baidu.com
-       IP-адрес: 220.181.7.203
-       Страна: China
-       Город: Beijing
-       Провайдер: IDC, China Telecommunications Corporation
-       Организация: 
+     4. baidu.com
+        ├─ IP-адрес:  220.181.7.203 
+        ├─ Страна:  China 
+        ├─ Город:  Beijing 
+        ├─ Провайдер:  IDC, China Telecommunications Corporation 
+        └─ Организация:   
 
-    5. wikipedia.org
-       IP-адрес: 185.15.59.224
-       Страна: The Netherlands
-       Город: Amsterdam
-       Провайдер: Wikimedia esams infra
-       Организация: 
+     5. wikipedia.org
+        ├─ IP-адрес:  185.15.59.224 
+        ├─ Страна:  The Netherlands 
+        ├─ Город:  Amsterdam 
+        ├─ Провайдер:  Wikimedia esams infra 
+        └─ Организация:   
 
-    6. qq.com
-       IP-адрес: 203.205.254.157
-       Страна: Hong Kong
-       Город: Hong Kong
-       Провайдер: Shenzhen Tencent Computer Systems Company Limited
-       Организация: Tencent
+     6. qq.com
+        ├─ IP-адрес:  113.108.81.189 
+        ├─ Страна:  China 
+        ├─ Город:  Guangzhou 
+        ├─ Провайдер:  Chinanet 
+        └─ Организация:  Chinanet GD 
 
-    7. taobao.com
-       IP-адрес: 59.82.44.240
-       Страна: China
-       Город: Hangzhou
-       Провайдер: Hangzhou Alibaba Advertising Co
-       Организация: Hangzhou Alibaba Advertising Co., Ltd.
+     7. taobao.com
+        ├─ IP-адрес:  2408:4001:f10::6f 
+        ├─ Страна:  China 
+        ├─ Город:  Beijing 
+        ├─ Провайдер:  Hangzhou Alibaba Advertising Co 
+        └─ Организация:  Aliyun Computing Co., LTD 
 
-    8. yahoo.com
-       IP-адрес: 74.6.231.20
-       Страна: United States
-       Город: Omaha
-       Провайдер: Oath Holdings Inc.
-       Организация: Oath Holdings Inc
+     8. yahoo.com
+        ├─ IP-адрес:  2001:4998:124:1507::f001 
+        ├─ Страна:  United States 
+        ├─ Город:  Lockport 
+        ├─ Провайдер:  Oath Holdings Inc. 
+        └─ Организация:  Oath Holdings Inc 
 
-    9. amazon.com
-       IP-адрес: 98.87.170.74
-       Страна: United States
-       Город: Ashburn
-       Провайдер: AT&T Corp.
-       Организация: Amazon Technologies Inc. (us-east-1)
+     9. amazon.com
+        ├─ IP-адрес:  98.87.170.71 
+        ├─ Страна:  United States 
+        ├─ Город:  Ashburn 
+        ├─ Провайдер:  AT&T Corp. 
+        └─ Организация:  Amazon Technologies Inc. (us-east-1) 
 
     10. twitter.com
-       IP-адрес: 172.66.0.227
-       Страна: Canada
-       Город: Toronto
-       Провайдер: Cloudflare, Inc.
-       Организация: Cloudflare, Inc.
+        ├─ IP-адрес:  162.159.140.229 
+        ├─ Страна:  Canada 
+        ├─ Город:  Toronto 
+        ├─ Провайдер:  Cloudflare, Inc. 
+        └─ Организация:  Cloudflare, Inc. 
 
-    === СТАТИСТИКА ПО СТРАНАМ ===
-              Country n
-    1   United States 3
-    2           China 2
-    3  United Kingdom 2
-    4          Canada 1
-    5       Hong Kong 1
-    6 The Netherlands 1
+     ================================================== 
+    ГЕОГРАФИЧЕСКОЕ РАСПРЕДЕЛЕНИЕ
+    ================================================== 
+    # A tibble: 5 × 2
+      Country         Количество
+      <chr>                <int>
+    1 United States            4
+    2 China                    3
+    3 Canada                   1
+    4 The Netherlands          1
+    5 United Kingdom           1
 
-    Результаты сохранены в файл: top_domains_geo_info.csv
+    Данные сохранены в файл: geo_analysis_results.csv
+
+``` r
+cat("\nПроцесс завершен.\n")
+```
+
+
+    Процесс завершен.
 
 ## Оценка результата
 

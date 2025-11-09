@@ -216,117 +216,117 @@ if(nrow(suspicious_activity) > 0) {
 
 ``` {r}
 
-# Подключение библиотек
+# Импорт необходимых пакетов
 library(httr)
 library(jsonlite)
 library(dplyr)
 
-# Список топ-10 доменов (можно изменить по необходимости)
-top_domains <- c(
-  "google.com",
-  "youtube.com",
-  "facebook.com",
-  "baidu.com",
-  "wikipedia.org",
-  "qq.com",
-  "taobao.com",
-  "yahoo.com",
-  "amazon.com",
+# Определение исследуемых доменных имен
+selected_domains <- c(
+  "google.com", "youtube.com", "facebook.com", 
+  "baidu.com", "wikipedia.org", "qq.com", 
+  "taobao.com", "yahoo.com", "amazon.com", 
   "twitter.com"
 )
 
-# Функция для получения информации о домене через ip-api.com
-get_domain_info <- function(domain) {
-  # URL API endpoint
-  api_url <- paste0("http://ip-api.com/json/", domain)
+# Функция получения географических данных домена
+fetch_geo_data <- function(domain_name) {
+  api_endpoint <- sprintf("http://ip-api.com/json/%s", domain_name)
   
-  tryCatch({
-    # Отправка GET-запроса
-    response <- GET(api_url)
+  attempt <- tryCatch({
+    api_response <- GET(api_endpoint)
     
-    # Проверка статуса ответа
-    if (status_code(response) == 200) {
-      # Парсинг JSON ответа
-      data <- fromJSON(content(response, "text"))
+    if (http_status(api_response)$category == "Success") {
+      response_data <- content(api_response, "parsed")
       
-      # Возвращаем нужные поля
-      return(data.frame(
-        Domain = domain,
-        IP = ifelse(is.null(data$query), NA, data$query),
-        Country = ifelse(is.null(data$country), NA, data$country),
-        City = ifelse(is.null(data$city), NA, data$city),
-        ISP = ifelse(is.null(data$isp), NA, data$isp),
-        Organization = ifelse(is.null(data$org), NA, data$org),
-        AS = ifelse(is.null(data$as), NA, data$as),
-        Status = ifelse(is.null(data$status), NA, data$status),
-        stringsAsFactors = FALSE
-      ))
+      tibble(
+        Domain = domain_name,
+        IP_address = response_data$query %||% NA,
+        Country = response_data$country %||% NA,
+        City = response_data$city %||% NA,
+        ISP = response_data$isp %||% NA,
+        Organization = response_data$org %||% NA,
+        AS_number = response_data$as %||% NA,
+        Request_status = response_data$status %||% NA
+      )
     } else {
-      warning(paste("Ошибка для домена", domain, ":", status_code(response)))
-      return(NULL)
+      message("Сбой запроса для ", domain_name, " - код: ", status_code(api_response))
+      NULL
     }
-  }, error = function(e) {
-    warning(paste("Ошибка для домена", domain, ":", e$message))
-    return(NULL)
+  }, error = function(err) {
+    message("Ошибка при обработке ", domain_name, ": ", err$message)
+    NULL
   })
-}
-
-# Функция с задержкой для соблюдения лимитов API (не более 45 запросов в минуту)
-get_domain_info_with_delay <- function(domain) {
-  result <- get_domain_info(domain)
-  # Задержка 2 секунды между запросами
-  Sys.sleep(2)
-  return(result)
-}
-
-# Получение информации для всех доменов
-cat("Начинаем сбор информации для топ-10 доменов...\n")
-
-# Создаем пустой dataframe для результатов
-results <- data.frame()
-
-# Обрабатываем каждый домен
-for (domain in top_domains) {
-  cat("Обрабатывается:", domain, "\n")
-  domain_info <- get_domain_info_with_delay(domain)
   
-  if (!is.null(domain_info)) {
-    results <- rbind(results, domain_info)
+  return(attempt)
+}
+
+# Модифицированная функция с задержкой выполнения
+fetch_with_delay <- function(domain) {
+  result_data <- fetch_geo_data(domain)
+  Sys.sleep(2.0)
+  return(result_data)
+}
+
+# Основной процесс сбора данных
+cat("Запуск процесса сбора географических данных...\n\n")
+
+collected_results <- list()
+
+for (current_domain in selected_domains) {
+  cat("Анализируется: ", current_domain, "\n")
+  domain_data <- fetch_with_delay(current_domain)
+  
+  if (!is.null(domain_data)) {
+    collected_results[[length(collected_results) + 1]] <- domain_data
   }
 }
 
-# Вывод результатов
-cat("\n=== РЕЗУЛЬТАТЫ ===\n")
+# Объединение результатов
+final_results <- bind_rows(collected_results)
 
-print(results)
+# Вывод итоговой информации
+cat("\n", strrep("=", 50), "\n")
+cat("ОБРАБОТАННЫЕ ДОМЕНЫ\n")
+cat(strrep("=", 50), "\n")
 
-# Красивое отображение результатов
-if (nrow(results) > 0) {
-  cat("\n=== СВОДНАЯ ИНФОРМАЦИЯ ===\n")
-  for (i in 1:nrow(results)) {
-    cat(sprintf("\n%d. %s\n", i, results$Domain[i]))
-    cat(sprintf("   IP-адрес: %s\n", results$IP[i]))
-    cat(sprintf("   Страна: %s\n", results$Country[i]))
-    cat(sprintf("   Город: %s\n", results$City[i]))
-    cat(sprintf("   Провайдер: %s\n", results$ISP[i]))
-    cat(sprintf("   Организация: %s\n", results$Organization[i]))
+if (nrow(final_results) > 0) {
+  # Детальный вывод по каждому домену
+  cat("\nДЕТАЛЬНАЯ ИНФОРМАЦИЯ:\n")
+  cat(strrep("-", 50), "\n")
+  
+  for (row_index in seq_len(nrow(final_results))) {
+    current_row <- final_results[row_index, ]
+    
+    cat(sprintf("\n%2d. %s\n", row_index, current_row$Domain))
+    cat("    ├─ IP-адрес: ", current_row$IP_address, "\n")
+    cat("    ├─ Страна: ", current_row$Country, "\n")
+    cat("    ├─ Город: ", current_row$City, "\n")
+    cat("    ├─ Провайдер: ", current_row$ISP, "\n")
+    cat("    └─ Организация: ", current_row$Organization, "\n")
   }
   
-  # Статистика по странам
-  country_stats <- results %>%
-    count(Country) %>%
-    arrange(desc(n))
+  # Анализ распределения по странам
+  country_distribution <- final_results %>%
+    group_by(Country) %>%
+    summarise(Количество = n(), .groups = 'drop') %>%
+    arrange(desc(Количество))
   
-  cat("\n=== СТАТИСТИКА ПО СТРАНАМ ===\n")
-  print(country_stats)
+  cat("\n", strrep("=", 50), "\n")
+  cat("ГЕОГРАФИЧЕСКОЕ РАСПРЕДЕЛЕНИЕ\n")
+  cat(strrep("=", 50), "\n")
+  print(country_distribution)
   
-  # Сохранение результатов в CSV файл
-  write.csv(results, "top_domains_geo_info.csv", row.names = FALSE)
-  cat("\nРезультаты сохранены в файл: top_domains_geo_info.csv\n")
+  # Сохранение результатов
+  output_filename <- "geo_analysis_results.csv"
+  write.csv(final_results, output_filename, row.names = FALSE)
+  cat(sprintf("\nДанные сохранены в файл: %s\n", output_filename))
   
 } else {
-  cat("Не удалось получить информацию ни об одном домене.\n")
+  cat("Не удалось получить данные для указанных доменов.\n")
 }
+
+cat("\nПроцесс завершен.\n")
 
 ```
 
