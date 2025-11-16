@@ -159,7 +159,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(httr)</span>
 <span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>1 Импортируйте данные. 2 Привести датасеты в вид “аккуратных данных”, преобразовать типы столбцов в соответствии с типом данных</p>
+</section>
+<section id="импортируйте-данные." class="level1">
+<h1>1 Импортируйте данные.</h1>
+</section>
+<section id="привести-датасеты-в-вид-аккуратных-данных-преобразовать-типы-столбцов-в-соответствии-с-типом-данных" class="level1">
+<h1>2 Привести датасеты в вид “аккуратных данных”, преобразовать типы столбцов в соответствии с типом данных</h1>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lubridate)</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(stringr)</span>
@@ -225,7 +230,9 @@ e.g.:
 <span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>         BSSID <span class="sc">!=</span> <span class="st">"(not associated)"</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">session_duration =</span> <span class="fu">as.numeric</span>(<span class="fu">difftime</span>(Last_time_seen, First_time_seen, <span class="at">units =</span> <span class="st">"mins"</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>3 Просмотрите общую структуру данных с помощью функции glimpse()</p>
+</section>
+<section id="просмотрите-общую-структуру-данных-с-помощью-функции-glimpse" class="level1">
+<h1>3 Просмотрите общую структуру данных с помощью функции glimpse()</h1>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"=== СТРУКТУРА ДАННЫХ ТОЧЕК ДОСТУПА ===</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -271,7 +278,9 @@ $ Probed_ESSIDs    &lt;chr&gt; "C322U13 3965", "C322U21 0566", "C322U13 3965", "
 $ session_duration &lt;dbl&gt; 106.683333, 158.850000, 160.216667, 157.733333, 6.916…</code></pre>
 </div>
 </div>
-<p>4 Определить небезопасные точки доступа (без шифрования – OPN)</p>
+</section>
+<section id="определить-небезопасные-точки-доступа-без-шифрования-opn" class="level1">
+<h1>4 Определить небезопасные точки доступа (без шифрования – OPN)</h1>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>insecure_ap <span class="ot">&lt;-</span> ap_data_clean <span class="sc">%&gt;%</span> <span class="fu">filter</span>(Privacy <span class="sc">==</span> <span class="st">"OPN"</span>)</span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">=== НЕБЕЗОПАСНЫЕ ТОЧКИ ДОСТУПА (OPN) ===</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -301,7 +310,9 @@ $ session_duration &lt;dbl&gt; 106.683333, 158.850000, 160.216667, 157.733333, 6
 <pre><code>Количество небезопасных точек доступа: 42 </code></pre>
 </div>
 </div>
-<p>5 Определить производителя для каждого обнаруженного устройства</p>
+</section>
+<section id="определить-производителя-для-каждого-обнаруженного-устройства" class="level1">
+<h1>5 Определить производителя для каждого обнаруженного устройства</h1>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>get_manufacturer <span class="ot">&lt;-</span> <span class="cf">function</span>(mac) {</span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  oui <span class="ot">&lt;-</span> <span class="fu">substr</span>(mac, <span class="dv">1</span>, <span class="dv">8</span>)</span>
@@ -329,7 +340,9 @@ $ session_duration &lt;dbl&gt; 106.683333, 158.850000, 160.216667, 157.733333, 6
       1   12247 </code></pre>
 </div>
 </div>
-<p>6 Выявить устройства, использующие последнюю версию протокола шифрования WPA3, и названия точек доступа, реализованных на этих устройствах</p>
+</section>
+<section id="выявить-устройства-использующие-последнюю-версию-протокола-шифрования-wpa3-и-названия-точек-доступа-реализованных-на-этих-устройствах" class="level1">
+<h1>6 Выявить устройства, использующие последнюю версию протокола шифрования WPA3, и названия точек доступа, реализованных на этих устройствах</h1>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>wpa3_devices <span class="ot">&lt;-</span> ap_data_clean <span class="sc">%&gt;%</span> </span>
 <span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">str_detect</span>(Privacy, <span class="st">"WPA3"</span>) <span class="sc">|</span> <span class="fu">str_detect</span>(Authentication, <span class="st">"WPA3"</span>))</span>
@@ -357,7 +370,9 @@ $ session_duration &lt;dbl&gt; 106.683333, 158.850000, 160.216667, 157.733333, 6
 8 76:C5:A0:70:08:96  &lt;NA&gt;                                 WPA3 W… SAE PSK       </code></pre>
 </div>
 </div>
-<p>7 Отсортировать точки доступа по интервалу времени, в течение которого они находились на связи, по убыванию.</p>
+</section>
+<section id="отсортировать-точки-доступа-по-интервалу-времени-в-течение-которого-они-находились-на-связи-по-убыванию." class="level1">
+<h1>7 Отсортировать точки доступа по интервалу времени, в течение которого они находились на связи, по убыванию.</h1>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>ap_sessions <span class="ot">&lt;-</span> ap_data_clean <span class="sc">%&gt;%</span></span>
 <span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(BSSID, First_time_seen) <span class="sc">%&gt;%</span></span>
@@ -388,7 +403,9 @@ $ Last_time_seen  &lt;dttm&gt; 2023-07-28 11:56:21, 2023-07-28 11:56:17, 2023-07
 $ Total_duration  &lt;dbl&gt; 163.2500, 163.0667, 163.0333, 163.0333, 163.0167, 162.…</code></pre>
 </div>
 </div>
-<p>8 Обнаружить топ-10 самых быстрых точек доступа.</p>
+</section>
+<section id="обнаружить-топ-10-самых-быстрых-точек-доступа." class="level1">
+<h1>8 Обнаружить топ-10 самых быстрых точек доступа.</h1>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>top10_fastest <span class="ot">&lt;-</span> ap_data_clean <span class="sc">%&gt;%</span></span>
 <span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(Speed)) <span class="sc">%&gt;%</span></span>
@@ -417,7 +434,10 @@ $ Total_duration  &lt;dbl&gt; 163.2500, 163.0667, 163.0333, 163.0333, 163.0167, 
 10 96:FF:FC:91:EF:64 &lt;NA&gt;    866</code></pre>
 </div>
 </div>
-<p>9 Отсортировать точки доступа по частоте отправки запросов (beacons) в единицу времени по их убыванию</p>
+</section>
+<section id="отсортировать-точки-доступа-по-частоте-отправки-запросов-beacons-в-единицу" class="level1">
+<h1>9 Отсортировать точки доступа по частоте отправки запросов (beacons) в единицу</h1>
+<p>времени по их убыванию</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>ap_beacon_rate <span class="ot">&lt;-</span> ap_data_clean <span class="sc">%&gt;%</span></span>
 <span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
@@ -438,7 +458,9 @@ $ session_duration &lt;dbl&gt; 0.11666667, 0.08333333, 0.15000000, 0.03333333, 0
 $ beacon_rate      &lt;dbl&gt; 51.428571, 48.000000, 33.333333, 30.000000, 30.000000…</code></pre>
 </div>
 </div>
-<p>10 Определить производителя для каждого обнаруженного устройства</p>
+</section>
+<section id="определить-производителя-для-каждого-обнаруженного-устройства-1" class="level1">
+<h1>10 Определить производителя для каждого обнаруженного устройства</h1>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>client_data_clean <span class="ot">&lt;-</span> client_data_clean <span class="sc">%&gt;%</span></span>
 <span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Manufacturer =</span> <span class="fu">map_chr</span>(Station_MAC, get_manufacturer))</span>
@@ -455,7 +477,9 @@ Unknown
     186 </code></pre>
 </div>
 </div>
-<p>11 Обнаружить устройства, которые НЕ рандомизируют свой MAC адрес</p>
+</section>
+<section id="обнаружить-устройства-которые-не-рандомизируют-свой-mac-адрес" class="level1">
+<h1>11 Обнаружить устройства, которые НЕ рандомизируют свой MAC адрес</h1>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>is_randomized_mac <span class="ot">&lt;-</span> <span class="cf">function</span>(mac) {</span>
 <span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span>(<span class="fu">is.na</span>(mac) <span class="sc">||</span> mac <span class="sc">==</span> <span class="st">""</span>) <span class="fu">return</span>(<span class="cn">NA</span>)</span>
@@ -482,7 +506,9 @@ $ Power        &lt;int&gt; -39, -61, -31, -71, -1, -37, -48, -37, -65, -29, -43,
 $ packets      &lt;int&gt; 432, 958, 163, 3, 71, 125, 122, 156, 117, 240, 76, 580, 4…</code></pre>
 </div>
 </div>
-<p>12 Кластеризовать запросы от устройств к точкам доступа по их именам. Определить время появления устройства в зоне радиовидимости и время выхода его из нее.</p>
+</section>
+<section id="кластеризовать-запросы-от-устройств-к-точкам-доступа-по-их-именам.-определить-время-появления-устройства-в-зоне-радиовидимости-и-время-выхода-его-из-нее." class="level1">
+<h1>12 Кластеризовать запросы от устройств к точкам доступа по их именам. Определить время появления устройства в зоне радиовидимости и время выхода его из нее.</h1>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a> client_clusters <span class="ot">&lt;-</span> client_data_clean <span class="sc">%&gt;%</span></span>
 <span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(Station_MAC, Probed_ESSIDs) <span class="sc">%&gt;%</span></span>
@@ -524,7 +550,9 @@ $ packets      &lt;int&gt; 432, 958, 163, 3, 71, 125, 122, 156, 117, 240, 76, 58
 #   total_packets &lt;int&gt;</code></pre>
 </div>
 </div>
-<p>13 Оценить стабильность уровня сигнала внури кластера во времени. Выявить наиболее стабильный кластер</p>
+</section>
+<section id="оценить-стабильность-уровня-сигнала-внури-кластера-во-времени.-выявить-наиболее-стабильный-кластер" class="level1">
+<h1>13 Оценить стабильность уровня сигнала внури кластера во времени. Выявить наиболее стабильный кластер</h1>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb57"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a>cluster_stability <span class="ot">&lt;-</span> client_data_clean <span class="sc">%&gt;%</span></span>
 <span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(Probed_ESSIDs), Probed_ESSIDs <span class="sc">!=</span> <span class="st">"Not Probed"</span>) <span class="sc">%&gt;%</span></span>
@@ -550,7 +578,6 @@ $ sd_power      &lt;dbl&gt; 0.7071068, 1.4142136, 4.1231056, 4.2426407, 5.218311
 $ cv_power      &lt;dbl&gt; 0.01457952, 0.02079726, 0.08006030, 0.07576144, 0.083236…</code></pre>
 </div>
 </div>
-</section>
 <section id="оценка-результата" class="level2">
 <h2 class="anchored" data-anchor-id="оценка-результата">Оценка результата</h2>
 <p>В рамках практческой работы была исследована радиоэлектронная обстановка и составлено представление о механизмах работы Wi-Fi сетей на канальном и сетевом уровне модели OSI.</p>
@@ -558,6 +585,7 @@ $ cv_power      &lt;dbl&gt; 0.01457952, 0.02079726, 0.08006030, 0.07576144, 0.08
 <section id="вывод" class="level2">
 <h2 class="anchored" data-anchor-id="вывод">Вывод</h2>
 <p>В практической работе мы использовали навыки написания кода на языке программирования R для обработки данных и закрепили знания основных функций обработки данных экосистемы tidyverse языка R.</p>
+</section>
 </section>
 
 </main>
