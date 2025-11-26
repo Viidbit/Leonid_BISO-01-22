@@ -140,9 +140,4 @@ print(error_count + warn_count)
 ```
 
 
-## Оценка результата
-
-
-
-## Вывод
 
