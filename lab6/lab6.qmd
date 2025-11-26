@@ -1,0 +1,148 @@
+---
+title: "Исследование вредоносной активности в домене Windows"
+subtitle: "Практика №5"
+author: "Lona610@yandex.ru"
+format: 
+  md:
+    output-file: README.md
+---
+
+## Цель работы
+
+1. Закрепить навыки исследования данных журнала Windows Active Directory
+2. Изучить структуру журнала системы Windows Active Directory
+3. Зекрепить практические навыки использования языка программирования R для обработки данных
+4. Закрепить знания основных функций обработки данных экосистемы tidyverse языка R
+
+## Исходные данные
+
+1.  Программное обеспечение ОС Windows 11
+2.  VS Code
+3.  Интерпретатор языка R 4.5.1
+
+## План
+
+1. Подготовить данные  
+2. выполнить задание
+
+## Шаги:
+
+# 1 Импортируйте данные.
+
+```{r}
+library(tidyverse)
+library(jsonlite)
+library(rvest)
+cat("Разархивируем и проверим содержимое файла с данными \n")
+untar("dataset.tar.gz")
+
+data <- jsonlite::stream_in(file("caldera_attack_evals_round1_day1_2019-10-20201108.json"))
+
+glimpse(data)
+```
+
+```{r}
+library(xml2)
+ library(rvest)
+ webpage_url <- "https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/plan/appendix-l--events-to-monitor"
+ webpage <- xml2::read_html(webpage_url)
+ event_df <- rvest::html_table(webpage)[[1]]
+ 
+ glimpse(event_df)
+ 
+ list_columns <- names(data)[sapply(data, is.list)]
+```
+
+# 2 Просмотрите общую структуру данных с помощью функции glimpse
+
+```{r}
+glimpse(data)
+```
+
+# 3  Раскройте датафрейм избавившись от вложенных датафреймов. Для обнаружения таких можно использовать функцию dplyr::glimpse() , а для раскрытия вложенности – tidyr::unnest() . Обратите внимание, что при раскрытии теряются внешние названия колонок – это можно предотвратить если использовать параметр tidyr::unnest(..., names_sep = ) .
+
+```{r}
+clean_data_1 <- data %>%
+  unnest_wider(winlog, names_sep = "_") %>%
+  unnest_wider(event, names_sep = "_") %>%
+  unnest_wider(log, names_sep = "_") %>%
+  unnest_wider(host, names_sep = "_") %>%
+  unnest_wider(agent, names_sep = "_") %>%
+  unnest_wider(ecs, names_sep = "_") %>%
+  unnest_wider(`@metadata`, names_sep = "_")
+
+glimpse(clean_data_1)
+```
+
+# 4  Минимизируйте количество колонок в датафрейме – уберите колоки с единственным значением параметра.
+
+```{r}
+get_constant_columns <- function(df) {
+  constant_cols <- character()
+  for (col in names(df)) {
+    if (n_distinct(df[[col]], na.rm = TRUE) <= 1) {
+      constant_cols <- c(constant_cols, col)
+    }
+  }
+  return(constant_cols)
+}
+
+constant_cols <- get_constant_columns(clean_data_1)
+cat("Столбцы с единственным значением:\n")
+print(constant_cols)
+
+clean_data_1 <- clean_data_1 %>%
+  select(-all_of(constant_cols))
+
+cat("Количество столбцов после удаления:", ncol(clean_data_1))
+```
+
+# 5  Какое количество хостов представлено в данном датасете?
+
+```{r}
+host_cols <- names(clean_data_1)[grepl("host|Host|computer|Computer", names(clean_data_1))]
+cat("Столбцы, связанные с хостами:\n")
+print(host_cols)
+
+if (length(host_cols) > 0) {
+  host_col <- host_cols[1]
+  host_count <- clean_data_1 %>%
+    distinct(!!sym(host_col)) %>%
+    nrow()
+  cat("Количество хостов:", host_count, "\n")
+} else {
+  cat("Столбцы с информацией о хостах не найдены\n")
+  host_count <- 0
+}
+
+```
+
+# 6 Подготовьте датафрейм с расшифровкой Windows Event_ID, приведите типы данных к типу их значений.
+ 
+```{r}
+event_df_1 <- event_df %>%
+rename(winlog_event_id = `Current Windows Event ID`, description = `Event Summary`) %>%
+mutate(winlog_event_id = as.integer(winlog_event_id),
+description = as.character(description))
+glimpse(event_df_1)
+```
+
+# 7 Есть ли в логе события с высоким и средним уровнем значимости? Сколько их?
+
+```{r}
+error_events <- clean_data_1 %>%
+filter(log_level %in% c("error"))
+warn_events <- clean_data_1 %>%
+filter(log_level %in% c("warning"))
+error_count <- nrow(error_events)
+warn_count <- nrow(warn_events)
+print(error_count + warn_count)
+```
+
+
+## Оценка результата
+
+
+
+## Вывод
+
