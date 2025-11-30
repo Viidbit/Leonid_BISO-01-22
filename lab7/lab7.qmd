@@ -36,56 +36,97 @@ format:
 
 ## Шаги:
 
-# 1 
+# 1 Библиотеки.
+
+```{r}
+options(repos = c(CRAN = "https://mirror.truenetwork.ru/CRAN/"))
+install.packages("arrow")
+install.packages("dplyr")
+library(arrow)
+library(dplyr)
+```
+
+# 2 Импорт данных.
 
 ```{r}
 
+dataset_path <- "https://storage.yandexcloud.net/arrow-datasets/yaqry_dataset.pqt"
+local_file <- "yaqry_dataset.pqt"
+
+if (!file.exists(local_file)) {
+  tryCatch({
+    download.file(url = dataset_path, destfile = local_file, mode = "wb")
+    message("Файл успешно загружен")
+  }, error = function(e) {
+    stop("Ошибка при загрузке файла: ", e$message)
+  })
+}
+
+net_traffic <- arrow::open_dataset(local_file, format = "parquet")
 ```
+
+# 3  Известно, что IP адреса внутренней сети начинаются с октетов, принадлежащих интервалу \[12-14\]. Определите количество хостов внутренней сети, представленных в датасете.
 
 ```{r}
+internal_network_patterns <- c("12.", "13.", "14.")
 
-```
-
-# 2 
-
-```{r}
-
-```
-
-# 3  
-
-```{r}
-
-```
-
-# 4  
-
-```{r}
-
-```
-
-# 5  
-
-```{r}
-
-
-```
-
-# 6 
+internal_hosts_count <- net_traffic %>%
+  
+  filter(
+    substr(src, 1, 3) %in% internal_network_patterns |
+    substr(dst, 1, 3) %in% internal_network_patterns
+  ) %>%
  
-```{r}
+  collect() %>%
+  summarise(
+    unique_hosts = n_distinct(c(src[substr(src, 1, 3) %in% internal_network_patterns],
+                               dst[substr(dst, 1, 3) %in% internal_network_patterns]))
+  ) %>%
+  pull(unique_hosts)
 
+print(internal_hosts_count)
 ```
-
-# 7 
-
-```{r}
-
-```
-
-
 
 ![](png/1.png)
+
+# 4  Определите суммарный объем исходящего трафика.
+
+```{r}
+outgoing_traffic <- net_traffic %>%
+  mutate(src_network = substr(src, 1, 3)) %>%
+  filter(src_network %in% c("12.", "13.", "14.")) %>%
+  summarise(
+    total_bytes = sum(as.numeric(bytes), na.rm = TRUE)
+  ) %>%
+  collect() %>%
+  pull(total_bytes)
+
+print(outgoing_traffic)
+```
+
+![](png/2.png)
+
+# 5  Определите суммарный объем входящего трафика.
+
+```{r}
+incoming_traffic <- net_traffic %>%
+  mutate(dst_prefix = substr(dst, 1, 3)) %>%
+  filter(dst_prefix %in% c("12.", "13.", "14.")) %>%
+  group_by(is_internal = TRUE) %>%
+  summarise(
+    incoming_total = sum(bytes, na.rm = TRUE)
+  ) %>%
+  ungroup() %>%
+  collect() %>%
+  pull(incoming_total)
+
+print(incoming_traffic)
+```
+
+![](png/3.png)
+
+
+
 
 
 
