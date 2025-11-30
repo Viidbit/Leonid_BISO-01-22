@@ -1,6 +1,6 @@
 ---
 title: "Использование технологии Yandex Query для анализа данных сетевой активности"
-subtitle: "Практика №5"
+subtitle: "Практика №7"
 author: "Lona610@yandex.ru"
 format: 
   md:

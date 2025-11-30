@@ -1,6 +1,6 @@
 ---
 title: "Исследование вредоносной активности в домене Windows"
-subtitle: "Практика №5"
+subtitle: "Практика №6"
 author: "Lona610@yandex.ru"
 format: 
   md:
