@@ -60,6 +60,8 @@ library(tidyverse)
 
     Warning: пакет 'readr' был собран под R версии 4.5.2
 
+    Warning: пакет 'dplyr' был собран под R версии 4.5.2
+
     Warning: пакет 'forcats' был собран под R версии 4.5.2
 
     Warning: пакет 'lubridate' был собран под R версии 4.5.2
