@@ -78,4 +78,4 @@ Lona610@yandex.ru
 
 ![](png/12.png)
 
-[Ссылка на дашборд](https://datalens.ru/6ou15ht0crhar-lab8-dashbord)
+[Ссылка на дашборд](https://datalens.ru/sblmnpthhm42d-lab8-bla)
